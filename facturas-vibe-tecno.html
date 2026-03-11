@@ -481,6 +481,16 @@ function renderCambClaveModal(){return`<div class="overlay">
 
 function renderFactModal(initial,lugarId){
   const f=initial||{}, lgs=allLugares();
+  // Normalizar fecha para el input (debe ser YYYY-MM-DD)
+  function normInputFecha(d){
+    if(!d)return"";
+    // Si viene DD/MM/YYYY convertir
+    const p=d.split("/");
+    if(p.length===3&&p[2].length===4)return p[2]+"-"+p[1].padStart(2,"0")+"-"+p[0].padStart(2,"0");
+    return d;
+  }
+  const fVenc=normInputFecha(f.vencimiento||"");
+  const fImp=f.importe?String(f.importe).replace(",","."):""  ;
   return`<div class="overlay">
   <div class="modal">
     <div class="modal-header"><div class="modal-title">${initial?"Editar Factura":"Nueva Factura"}</div><button class="modal-close" onclick="closeFactModal()">&#x2715;</button></div>
@@ -490,8 +500,8 @@ function renderFactModal(initial,lugarId){
     </div>
     <div class="form-group"><label>N Factura</label><input type="text" id="fNumero" placeholder="Ej: 0002-00001234" value="${f.numero||""}"></div>
     <div class="form-group"><label>Concepto</label><input type="text" id="fConcepto" placeholder="Ej: Edesur, AFIP, Alquiler..." value="${f.concepto||""}"></div>
-    <div class="form-group"><label>Importe (ARS)</label><input type="number" id="fImporte" placeholder="0" value="${f.importe||""}"></div>
-    <div class="form-group"><label>Vencimiento</label><input type="date" id="fVencimiento" value="${f.vencimiento||""}"></div>
+    <div class="form-group"><label>Importe (ARS)</label><input type="number" id="fImporte" placeholder="0" value="${fImp}"></div>
+    <div class="form-group"><label>Vencimiento</label><input type="date" id="fVencimiento" value="${fVenc}"></div>
     <div class="form-group"><label>Categoria</label>
       <select id="fCategoria">${CATS.map(c=>`<option${(f.categoria||"Servicios")===c?" selected":""}>${c}</option>`).join("")}</select>
     </div>
