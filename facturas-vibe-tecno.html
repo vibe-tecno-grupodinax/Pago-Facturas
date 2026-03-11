@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestor de Facturas - VIBE TECNO SRL</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#07090f;--bg2:#0d1117;--bg3:#131923;--border:#1e2d3d;--border2:#243447;
+    --text:#e2e8f0;--text2:#8899aa;--text3:#4a5568;
+    --blue:#3b82f6;--green:#10b981;--yellow:#f59e0b;--red:#ef4444;--orange:#f97316;--pink:#f472b6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;}
+  .header{background:var(--bg2);border-bottom:1px solid var(--border);padding:.9rem 1.5rem;position:sticky;top:0;z-index:100;}
+  .header-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap;}
+  .logo-title{font-size:1rem;font-weight:700;}
+  .logo-sub{font-size:.7rem;color:var(--blue);font-family:'DM Mono',monospace;letter-spacing:.05em;}
+  .sync-badge{font-size:.68rem;color:var(--yellow);font-family:'DM Mono',monospace;animation:pulse 1.5s infinite;}
+  .sheets-badge{font-size:.68rem;color:var(--green);opacity:.7;font-family:'DM Mono',monospace;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .header-btns{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;}
+  .btn{padding:.4rem .9rem;border-radius:8px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:500;transition:all .15s;}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .btn-nav{background:var(--bg3);color:var(--text2);border:1px solid var(--border);}
+  .btn-nav:hover{background:var(--border);color:var(--text);}
+  .btn-nav.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+  .btn-primary{background:var(--blue);color:#fff;}
+  .btn-primary:hover{background:#2563eb;}
+  .btn-success{background:var(--green);color:#fff;}
+  .btn-success:hover{background:#059669;}
+  .btn-danger{background:transparent;color:var(--red);border:1px solid #ef444433;}
+  .btn-danger:hover{background:#1a0808;}
+  .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border);}
+  .btn-ghost:hover{color:var(--text);border-color:var(--border2);}
+  .btn-priv{background:#1f0a15;color:var(--pink);border:1px solid #f472b633;}
+  .btn-priv:hover{background:#2a0f1e;}
+  .btn-sm{padding:.28rem .6rem;font-size:.74rem;border-radius:6px;}
+  .btn-refresh{background:var(--bg3);color:var(--text3);border:1px solid var(--border);font-size:.78rem;}
+  .btn-refresh:hover{color:var(--text2);}
+  .tabs-bar{background:#0a0e18;border-bottom:1px solid var(--border);padding:.55rem 1.5rem;overflow-x:auto;}
+  .tabs-inner{max-width:1100px;margin:0 auto;display:flex;gap:.35rem;min-width:max-content;}
+  .tab-btn{padding:.35rem .85rem;border-radius:20px;border:1px solid transparent;cursor:pointer;font-size:.78rem;font-weight:500;transition:all .15s;background:var(--bg3);color:var(--text2);display:flex;align-items:center;gap:.3rem;}
+  .tab-btn.all-active{background:var(--text);color:var(--bg);border-color:var(--text);}
+  .tab-btn.lugar-active{font-weight:700;}
+  .tab-btn:hover:not(.all-active):not(.lugar-active){background:var(--border);}
+  .badge{background:var(--red);color:#fff;border-radius:20px;padding:0 .38rem;font-size:.65rem;font-weight:700;}
+  .priv-label{font-size:.6rem;opacity:.8;}
+  .main{max-width:1100px;margin:0 auto;padding:1.25rem 1rem;}
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.85rem;margin-bottom:1.5rem;}
+  .kpi-card{border-radius:12px;padding:1.1rem;border:1px solid;}
+  .kpi-val{font-size:1.4rem;font-weight:700;}
+  .kpi-label{font-size:.74rem;color:var(--text2);margin-top:.2rem;}
+  .lugar-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.85rem;margin-bottom:1.5rem;}
+  .lugar-card{border-radius:12px;padding:1.1rem;border:1px solid;cursor:pointer;transition:transform .1s;}
+  .lugar-card:hover{transform:translateY(-1px);}
+  .alert{border-radius:12px;padding:1rem 1.25rem;margin-bottom:.7rem;border:1px solid;}
+  .alert-red{background:#1a0808;border-color:#7f1d1d;color:#fca5a5;}
+  .alert-faltantes{background:#0a1020;}
+  .tags{display:flex;flex-wrap:wrap;gap:.35rem;}
+  .tag{padding:.22rem .6rem;border-radius:20px;font-size:.74rem;border:1px solid;}
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1.25rem;}
+  .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;}
+  .card-title{font-size:.95rem;font-weight:600;color:#cbd5e1;}
+  .venc-row{display:flex;align-items:center;justify-content:space-between;padding:.65rem .8rem;background:var(--bg3);border-radius:8px;margin-bottom:.4rem;border-left:3px solid;}
+  .venc-name{font-size:.86rem;color:#cbd5e1;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .venc-meta{display:flex;gap:.5rem;margin-top:.18rem;flex-wrap:wrap;align-items:center;}
+  .lugar-chip{font-size:.69rem;padding:.1rem .42rem;border-radius:20px;}
+  .venc-right{text-align:right;flex-shrink:0;margin-left:.75rem;}
+  .venc-amt{font-size:.98rem;font-weight:700;white-space:nowrap;}
+  .empty{color:var(--text3);text-align:center;padding:2rem 0;}
+  .factura-row{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:.85rem 1rem;border-left:4px solid;display:flex;align-items:center;gap:.85rem;flex-wrap:wrap;margin-bottom:.45rem;}
+  .factura-info{flex:1;min-width:180px;}
+  .factura-name{font-size:.9rem;font-weight:600;color:var(--text);display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;margin-bottom:.3rem;}
+  .factura-meta{display:flex;gap:.85rem;flex-wrap:wrap;}
+  .factura-meta span{font-size:.76rem;color:var(--text3);font-family:'DM Mono',monospace;}
+  .factura-right{text-align:right;flex-shrink:0;}
+  .factura-amt{font-size:1rem;font-weight:700;white-space:nowrap;}
+  .factura-actions{display:flex;gap:.3rem;margin-top:.4rem;justify-content:flex-end;flex-wrap:wrap;}
+  .status-chip{padding:.16rem .48rem;border-radius:20px;font-size:.69rem;font-weight:700;}
+  .filter-row{display:flex;gap:.35rem;margin-bottom:.85rem;flex-wrap:wrap;}
+  .filter-btn{padding:.28rem .75rem;border-radius:20px;border:none;cursor:pointer;font-size:.76rem;background:var(--bg3);color:var(--text2);transition:all .15s;}
+  .filter-btn.active{background:var(--blue);color:#fff;}
+  .rep-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.85rem;margin-bottom:1.25rem;}
+  .rep-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1rem;text-align:center;}
+  .rep-val{font-size:1.2rem;font-weight:700;}
+  .rep-label{font-size:.74rem;color:var(--text2);margin-top:.25rem;}
+  .progress-bar{height:8px;background:var(--border);border-radius:4px;overflow:hidden;}
+  .progress-fill{height:100%;border-radius:4px;transition:width .5s;}
+  .lugar-rep-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.75rem;margin-bottom:1.25rem;}
+  table{width:100%;border-collapse:collapse;}
+  thead tr{background:var(--bg3);}
+  th{padding:.55rem 1rem;text-align:left;color:var(--text3);font-size:.74rem;font-weight:500;white-space:nowrap;}
+  td{padding:.6rem 1rem;font-size:.82rem;border-top:1px solid var(--border);}
+  .table-wrap{overflow-x:auto;}
+  select,input[type=text],input[type=number],input[type=date],input[type=password]{
+    width:100%;padding:.6rem .75rem;background:var(--bg);border:1px solid var(--border2);
+    border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none;transition:border .15s;}
+  select:focus,input:focus{border-color:var(--blue);}
+  label{display:block;color:var(--text3);font-size:.76rem;margin-bottom:.3rem;}
+  .form-group{margin-bottom:.8rem;}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:500;display:flex;align-items:center;justify-content:center;padding:1rem;}
+  .modal{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;width:100%;max-width:460px;padding:1.75rem;max-height:90vh;overflow-y:auto;}
+  .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.35rem;}
+  .modal-title{font-size:1rem;font-weight:700;color:var(--text);}
+  .modal-close{background:none;border:none;color:var(--text2);font-size:1.3rem;cursor:pointer;line-height:1;}
+  .modal-close:hover{color:var(--text);}
+  .modal-footer{display:flex;gap:.65rem;margin-top:1.1rem;}
+  .modal-footer .btn{flex:1;padding:.72rem;}
+  .error-box{background:#1a0808;border:1px solid #7f1d1d;border-radius:8px;padding:.6rem .8rem;margin-bottom:.9rem;color:#fca5a5;font-size:.82rem;}
+  .pay-summary{background:var(--bg);border-radius:10px;padding:1rem;margin-bottom:1.1rem;}
+  .pay-concept{color:var(--text2);font-size:.83rem;}
+  .pay-amount{color:var(--green);font-size:1.4rem;font-weight:700;margin-top:.25rem;}
+  .drop-zone{border:2px dashed var(--border2);border-radius:10px;padding:1rem;text-align:center;cursor:pointer;margin-bottom:1rem;}
+  .drop-zone:hover{border-color:var(--blue);}
+  .drop-zone p{color:var(--text2);font-size:.82rem;}
+  .loading-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;}
+  .spinner{width:44px;height:44px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .9s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading-text{color:var(--text2);font-size:.88rem;font-family:'DM Mono',monospace;}
+  .error-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;text-align:center;padding:2rem;}
+  @media(max-width:600px){.rep-grid{grid-template-columns:1fr}.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwCYhAopv3aZftQYyU4NlKBozrT6q_Yt4ZZvsBw2hc7btoKBAb5-JFzuS7ZgsUbLcfzfA/exec";
+
+const LUGARES = [
+  {id:"oficina",    label:"Oficina",        color:"#3b82f6", colorDim:"#0d1e3d",
+   conceptos:["IPLAN (Internet)","Edesur (Luz)","Expensas","AySA (Agua)","SIALAR (Alarma)","Movistar","Personal (Celulares)","ABL","Sistemas","Contador","Cadeteria","Snack Bar","Almuerzo del Mes","Seguros","IIBB","Cargas Sociales"]},
+  {id:"deposito",   label:"Deposito",       color:"#f59e0b", colorDim:"#1c1507",
+   conceptos:["Alquiler/Factura","Alquiler/Efectivo","Tsg/Municipalidad","AySA (Agua)","Edesur (Luz)","Verisure (Alarma)","Starlink (Internet)","Seguros","Agua Dispensers","Seg. e Higiene","Servicios de Limpieza","Cargas Sociales"]},
+  {id:"corrientes", label:"Res. Corrientes",color:"#10b981", colorDim:"#071a12",
+   conceptos:["ABL (Inmobiliario)","AySA (Agua)","Edesur (Luz)","Metrogas (Gas)","Expensas (Consorcio)","Expensas Cochera"]},
+  {id:"ramsay",     label:"Res. Ramsay",    color:"#a78bfa", colorDim:"#1a1433",
+   conceptos:["Movistar Hogar","Personal Flow","Edenor (Luz)","Expensas"]},
+];
+const LUGARES_PRIV = [
+  {id:"hernan",  label:"Gastos Hernan",  color:"#f472b6", colorDim:"#1f0a15", privado:true, conceptos:[]},
+  {id:"martin",  label:"Gastos Martin",  color:"#fb923c", colorDim:"#1a0e05", privado:true, conceptos:[]},
+  {id:"ernesto", label:"Gastos Ernesto", color:"#34d399", colorDim:"#041a10", privado:true, conceptos:[]},
+];
+const CLAVE_DEFAULT = "1234";
+const MONTHS = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const CATS = ["Servicios","Impuestos","Alquiler","Compras/Proveedores","Otros"];
+const STATUS = {
+  pendiente:{label:"Pendiente",color:"#f59e0b"},
+  vencida:  {label:"Vencida",  color:"#ef4444"},
+  pagada:   {label:"Pagada",   color:"#10b981"},
+};
+
+let state = {
+  facturas:[], loading:true, loadError:"", syncing:false,
+  view:"dashboard", lugarActivo:"todos",
+  privUnlocked:false, savedClave:localStorage.getItem("priv_clave")||null,
+  filterStatus:"Todas", repMes:new Date().getMonth(), repAnio:new Date().getFullYear(),
+  addModal:false, editModal:null, payModal:null, confirmDel:null,
+  showAcceso:false, showCambiarClave:false,
+};
+
+function fmtARS(n){return new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(n||0);}
+function daysUntil(d){const t=new Date();t.setHours(0,0,0,0);const x=new Date(d+"T12:00:00");x.setHours(0,0,0,0);return Math.ceil((x-t)/86400000);}
+function calcStatus(f){if(f.estado==="pagada")return"pagada";return daysUntil(f.vencimiento)<0?"vencida":"pendiente";}
+function allLugares(){return state.privUnlocked?[...LUGARES,...LUGARES_PRIV]:LUGARES;}
+function getLugar(id){return allLugares().find(l=>l.id===id)||LUGARES[0];}
+
+// ====== APPS SCRIPT API ======
+async function api(params) {
+  const url = new URL(SCRIPT_URL);
+  Object.entries(params).forEach(([k,v])=>url.searchParams.set(k,v));
+  const r = await fetch(url.toString());
+  if(!r.ok) throw new Error("Error de red: "+r.status);
+  const data = await r.json();
+  if(data.error) throw new Error(data.error);
+  return data;
+}
+
+async function loadFacturas() {
+  state.loading=true; state.loadError=""; render();
+  try {
+    const data = await api({action:"getAll"});
+    state.facturas = data.map(f=>({...f, importe:parseFloat(f.importe)||0, id:parseInt(f.id)||0})).filter(f=>f.id>0);
+  } catch(e) { state.loadError = e.message; }
+  state.loading=false; render();
+}
+
+async function addFactura(data) {
+  state.syncing=true; render();
+  const id = Date.now();
+  const f = {id,...data,estado:"pendiente",comprobante:"",fecha_pago:""};
+  try { await api({action:"add", data:JSON.stringify(f)}); await loadFacturas(); }
+  catch(e) { alert("Error al guardar: "+e.message); state.syncing=false; render(); return; }
+  state.syncing=false; state.addModal=false; render();
+}
+
+async function editFactura(original, data) {
+  state.syncing=true; render();
+  const updated = {...original,...data};
+  try { await api({action:"update", id:original.id, data:JSON.stringify(updated)}); await loadFacturas(); }
+  catch(e) { alert("Error al actualizar: "+e.message); }
+  state.syncing=false; state.editModal=null; render();
+}
+
+async function payFactura(id, fecha, comp) {
+  state.syncing=true; render();
+  const f = state.facturas.find(x=>x.id===id);
+  if(!f){state.syncing=false;return;}
+  const updated = {...f, estado:"pagada", fecha_pago:fecha, comprobante:comp};
+  try { await api({action:"update", id, data:JSON.stringify(updated)}); await loadFacturas(); }
+  catch(e) { alert("Error al registrar pago: "+e.message); }
+  state.syncing=false; render();
+}
+
+async function delFactura(id) {
+  state.syncing=true; render();
+  try { await api({action:"delete", id}); await loadFacturas(); }
+  catch(e) { alert("Error al borrar: "+e.message); }
+  state.syncing=false; state.confirmDel=null; render();
+}
+
+// ====== COMPUTED ======
+function getC() {
+  const mesActual=new Date().getMonth(), anioActual=new Date().getFullYear();
+  const fcs=state.facturas.map(f=>({...f,_status:calcStatus(f)}));
+  const fcsVis=fcs.filter(f=>{ const lg=getLugar(f.lugar); return !(lg.privado&&!state.privUnlocked); });
+  const fcsActivos=state.lugarActivo==="todos"?fcsVis:fcsVis.filter(f=>f.lugar===state.lugarActivo);
+  const vencidas=fcsActivos.filter(f=>f._status==="vencida");
+  const proximas=fcsActivos.filter(f=>f._status==="pendiente"&&daysUntil(f.vencimiento)<=7);
+  const totalPend=fcsActivos.filter(f=>f._status!=="pagada").reduce((s,f)=>s+f.importe,0);
+  const pagadasMes=fcsActivos.filter(f=>f._status==="pagada"&&new Date(f.vencimiento+"T12:00:00").getMonth()===mesActual).length;
+  function getFaltantes(lugarId) {
+    const lugar=getLugar(lugarId);
+    if(!lugar.conceptos||!lugar.conceptos.length)return[];
+    const delMes=fcs.filter(f=>{
+      if(f.lugar!==lugarId)return false;
+      const d=new Date(f.vencimiento+"T12:00:00");
+      return d.getMonth()===mesActual&&d.getFullYear()===anioActual;
+    });
+    return lugar.conceptos.filter(c=>!delMes.some(f=>(f.concepto||"").toLowerCase().includes(c.toLowerCase().split(" ")[0].toLowerCase())));
+  }
+  const repFacs=fcsActivos.filter(f=>{const d=new Date(f.vencimiento+"T12:00:00");return d.getMonth()===state.repMes&&d.getFullYear()===state.repAnio;});
+  const repTotal=repFacs.reduce((s,f)=>s+f.importe,0);
+  const repPagado=repFacs.filter(f=>f._status==="pagada").reduce((s,f)=>s+f.importe,0);
+  return {fcs,fcsVis,fcsActivos,vencidas,proximas,totalPend,pagadasMes,getFaltantes,repFacs,repTotal,repPagado,repPct:repTotal>0?Math.round(repPagado/repTotal*100):0,mesActual,anioActual};
+}
+
+// ====== RENDER ======
+function render() {
+  const app = document.getElementById("app");
+  if(state.loading){app.innerHTML=`<div class="loading-screen"><div class="spinner"></div><div class="loading-text">Cargando datos desde Google Sheets...</div></div>`;return;}
+  if(state.loadError){app.innerHTML=`<div class="error-screen"><div style="font-size:2rem;color:#ef4444">!</div><p style="color:#fca5a5;max-width:400px">${state.loadError}</p><button class="btn btn-primary" onclick="loadFacturas()">Reintentar</button></div>`;return;}
+
+  const C=getC(), lugares=allLugares(), lugarObj=lugares.find(l=>l.id===state.lugarActivo), ac=lugarObj?.color||"#3b82f6";
+
+  app.innerHTML = `
+  <div class="header">
+    <div class="header-inner">
+      <div>
+        <div class="logo-title">Gestor de Facturas</div>
+        <div class="logo-sub">VIBE TECNO SRL &nbsp;${state.syncing?'<span class="sync-badge">Guardando...</span>':'<span class="sheets-badge">Google Sheets</span>'}</div>
+      </div>
+      <div class="header-btns">
+        ${["dashboard","facturas","reporte"].map(v=>`<button class="btn btn-nav${state.view===v?" active":""}" onclick="setView('${v}')">${v==="dashboard"?"Inicio":v==="facturas"?"Facturas":"Reporte"}</button>`).join("")}
+        <button class="btn btn-refresh" onclick="loadFacturas()">&#8635; Actualizar</button>
+        ${!state.privUnlocked
+          ?`<button class="btn btn-priv" onclick="st({showAcceso:true})">Acceso Privado</button>`
+          :`<button class="btn btn-priv btn-sm" onclick="st({showCambiarClave:true})">Cambiar Clave</button>
+            <button class="btn btn-danger btn-sm" onclick="cerrarPriv()">Cerrar Privado</button>`}
+      </div>
+    </div>
+  </div>
+  <div class="tabs-bar">
+    <div class="tabs-inner">
+      <button class="tab-btn${state.lugarActivo==="todos"?" all-active":""}" onclick="setLugar('todos')">Todos</button>
+      ${lugares.map(l=>{
+        const v=C.fcsVis.filter(f=>f.lugar===l.id&&f._status==="vencida").length;
+        return `<button class="tab-btn${state.lugarActivo===l.id?" lugar-active":""}" onclick="setLugar('${l.id}')" style="${state.lugarActivo===l.id?`border-color:${l.color};background:${l.color}22;color:${l.color}`:""}">
+          ${l.privado?'<span class="priv-label">PRIV</span>':''}${l.label}${v>0?`<span class="badge">${v}</span>`:""}
+        </button>`;
+      }).join("")}
+    </div>
+  </div>
+  <div class="main">
+    ${state.view==="dashboard"?renderDash(C,lugares,ac):""}
+    ${state.view==="facturas"?renderFacts(C,ac):""}
+    ${state.view==="reporte"?renderRep(C,lugares):""}
+  </div>
+  ${state.showAcceso?renderAccesoModal():""}
+  ${state.showCambiarClave?renderCambClaveModal():""}
+  ${state.addModal?renderFactModal(null,state.lugarActivo==="todos"?"oficina":state.lugarActivo):""}
+  ${state.editModal?renderFactModal(state.editModal,state.editModal.lugar):""}
+  ${state.payModal?renderPayModal():""}
+  ${state.confirmDel!==null?renderConfirm():""}
+  `;
+}
+
+function renderDash(C,lugares,ac){
+  const faltantesHtml=lugares.map(l=>{
+    const falt=C.getFaltantes(l.id);
+    if(!falt.length||(state.lugarActivo!=="todos"&&state.lugarActivo!==l.id))return"";
+    return `<div class="alert alert-faltantes" style="border-color:${l.color}33;margin-bottom:.6rem">
+      <div style="font-size:.8rem;font-weight:700;color:${l.color};margin-bottom:.45rem">${l.label} - Falta cargar en ${MONTHS[C.mesActual]}:</div>
+      <div class="tags">${falt.map(c=>`<span class="tag" style="color:${l.color};background:${l.color}18;border-color:${l.color}44">${c}</span>`).join("")}</div>
+    </div>`;
+  }).join("");
+
+  const alertHtml=(C.vencidas.length||C.proximas.length)?`
+    <div class="alert alert-red" style="margin-bottom:1rem">
+      ${C.vencidas.length?`<div>ALERTA: ${C.vencidas.length} factura(s) vencida(s) &mdash; ${C.vencidas.map(f=>f.concepto).join(", ")}</div>`:""}
+      ${C.proximas.length?`<div style="color:#fcd34d;margin-top:${C.vencidas.length?".4rem":"0"}">AVISO: ${C.proximas.length} vence(n) en los proximos 7 dias</div>`:""}
+    </div>`:"";
+
+  const lugarCards=state.lugarActivo==="todos"?`<div class="lugar-grid">${allLugares().map(l=>{
+    const lFcs=C.fcsVis.filter(f=>f.lugar===l.id);
+    const pend=lFcs.filter(f=>f._status!=="pagada").reduce((s,f)=>s+f.importe,0);
+    const venc=lFcs.filter(f=>f._status==="vencida").length;
+    return `<div class="lugar-card" style="background:${l.color}0d;border-color:${l.color}33" onclick="setLugar('${l.id}')">
+      <div style="font-size:.82rem;font-weight:700;color:${l.color};margin-bottom:.4rem;display:flex;align-items:center;gap:.4rem">
+        ${l.privado?`<span style="font-size:.6rem;background:${l.color}22;border:1px solid ${l.color}44;color:${l.color};padding:.1rem .4rem;border-radius:20px">PRIV</span>`:""}${l.label}
+      </div>
+      <div style="font-size:1.1rem;font-weight:700">${fmtARS(pend)}</div>
+      <div style="font-size:.73rem;color:#4a5568;margin-top:.2rem">pendiente${venc?` | ${venc} vencida(s)`:""}</div>
+    </div>`;
+  }).join("")}</div>`:"";
+
+  const prox=C.fcsActivos.filter(f=>f._status!=="pagada").sort((a,b)=>new Date(a.vencimiento)-new Date(b.vencimiento)).slice(0,8);
+  return `
+    ${faltantesHtml}${alertHtml}
+    <div class="kpi-grid">
+      ${[
+        {l:"Pendiente Total",v:fmtARS(C.totalPend),c:"#f59e0b",bg:"#1c1507"},
+        {l:"Vencidas",       v:C.vencidas.length,  c:"#ef4444",bg:"#1a0808"},
+        {l:"Vence en 7d",    v:C.proximas.length,  c:"#f97316",bg:"#1a0f06"},
+        {l:"Pagadas este mes",v:C.pagadasMes,      c:"#10b981",bg:"#071a12"},
+      ].map(k=>`<div class="kpi-card" style="background:${k.bg};border-color:${k.c}44"><div class="kpi-val" style="color:${k.c}">${k.v}</div><div class="kpi-label">${k.l}</div></div>`).join("")}
+    </div>
+    ${lugarCards}
+    <div class="card">
+      <div class="card-header"><div class="card-title">Proximos vencimientos</div><button class="btn btn-primary btn-sm" onclick="st({addModal:true})">+ Nueva</button></div>
+      ${prox.map(f=>{
+        const days=daysUntil(f.vencimiento),s=STATUS[f._status],lg=getLugar(f.lugar);
+        const fj=escJ(f);
+        return `<div class="venc-row" style="border-left-color:${s.color}">
+          <div style="flex:1;min-width:0">
+            <div class="venc-name">${f.concepto}</div>
+            <div class="venc-meta">
+              <span class="lugar-chip" style="color:${lg.color};background:${lg.color}18">${lg.label}</span>
+              <span style="font-size:.7rem;color:${days<0?"#ef4444":days<=7?"#f59e0b":"#4a5568"}">${days<0?`Vencida hace ${Math.abs(days)}d`:days===0?"Vence hoy":`Vence en ${days}d`}</span>
+            </div>
+          </div>
+          <div class="venc-right">
+            <div class="venc-amt" style="color:${s.color}">${fmtARS(f.importe)}</div>
+            <button class="btn btn-success btn-sm" style="margin-top:.3rem" onclick='st({payModal:${fj}})'>Pagar</button>
+          </div>
+        </div>`;
+      }).join("")}
+      ${prox.length===0?'<div class="empty">Todo al dia</div>':""}
+    </div>`;
+}
+
+function renderFacts(C,ac){
+  const lista=C.fcsActivos.filter(f=>state.filterStatus==="Todas"||f._status===state.filterStatus).sort((a,b)=>new Date(a.vencimiento)-new Date(b.vencimiento));
+  return `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.1rem">
+      <h2 style="font-size:1rem;font-weight:700;color:#cbd5e1">${state.lugarActivo==="todos"?"Todas las Facturas":getLugar(state.lugarActivo).label}</h2>
+      <button class="btn btn-primary btn-sm" onclick="st({addModal:true})">+ Nueva Factura</button>
+    </div>
+    <div class="filter-row">
+      ${["Todas","pendiente","vencida","pagada"].map(s=>`<button class="filter-btn${state.filterStatus===s?" active":""}" onclick="st({filterStatus:'${s}'})">${s==="Todas"?"Todas":(STATUS[s]?.label||s)}</button>`).join("")}
+    </div>
+    ${lista.map(f=>{
+      const days=daysUntil(f.vencimiento),s=STATUS[f._status],lg=getLugar(f.lugar),fj=escJ(f);
+      return `<div class="factura-row" style="border-left-color:${s.color}">
+        <div class="factura-info">
+          <div class="factura-name">${f.concepto}
+            <span class="status-chip" style="background:${s.color}22;color:${s.color}">${s.label}</span>
+            <span class="status-chip" style="background:${lg.color}18;color:${lg.color}">${lg.label}</span>
+          </div>
+          <div class="factura-meta">
+            <span>N: ${f.numero||"-"}</span>
+            <span>Venc: ${new Date(f.vencimiento+"T12:00:00").toLocaleDateString("es-AR")}${f._status!=="pagada"?` <span style="color:${days<0?"#ef4444":days<=7?"#f59e0b":"#4a5568"}">(${days<0?`-${Math.abs(days)}d`:days===0?"hoy":`+${days}d`})</span>`:""}</span>
+            ${f.comprobante?`<span style="color:#10b981">Comp: ${f.comprobante}</span>`:""}
+            ${f.fecha_pago?`<span style="color:#10b981">Pagado: ${f.fecha_pago}</span>`:""}
+          </div>
+        </div>
+        <div class="factura-right">
+          <div class="factura-amt" style="color:${s.color}">${fmtARS(f.importe)}</div>
+          <div class="factura-actions">
+            ${f._status!=="pagada"?`<button class="btn btn-success btn-sm" onclick='st({payModal:${fj}})'>Pagar</button>`:""}
+            <button class="btn btn-ghost btn-sm" onclick='st({editModal:${fj}})'>Editar</button>
+            <button class="btn btn-danger btn-sm" onclick="st({confirmDel:${f.id}})">Borrar</button>
+          </div>
+        </div>
+      </div>`;
+    }).join("")}
+    ${lista.length===0?'<div class="empty" style="padding:3rem">No hay facturas en esta seccion.</div>':""}`;
+}
+
+function renderRep(C,lugares){
+  return `
+    <h2 style="font-size:1rem;font-weight:700;color:#cbd5e1;margin-bottom:1.1rem">Reporte Mensual</h2>
+    <div style="display:flex;gap:.65rem;margin-bottom:1.25rem;flex-wrap:wrap">
+      <select onchange="st({repMes:+this.value})" style="width:auto">${MONTHS.map((m,i)=>`<option value="${i}"${state.repMes===i?" selected":""}>${m}</option>`).join("")}</select>
+      <select onchange="st({repAnio:+this.value})" style="width:auto">${[2024,2025,2026,2027].map(y=>`<option${state.repAnio===y?" selected":""}>${y}</option>`).join("")}</select>
+    </div>
+    <div class="rep-grid">
+      <div class="rep-card"><div class="rep-val" style="color:#cbd5e1">${fmtARS(C.repTotal)}</div><div class="rep-label">Total facturado</div></div>
+      <div class="rep-card"><div class="rep-val" style="color:#10b981">${fmtARS(C.repPagado)}</div><div class="rep-label">Pagado</div></div>
+      <div class="rep-card"><div class="rep-val" style="color:#f59e0b">${fmtARS(C.repTotal-C.repPagado)}</div><div class="rep-label">Pendiente</div></div>
+    </div>
+    ${C.repTotal>0?`<div class="card" style="margin-bottom:1.1rem;padding:1rem">
+      <div style="display:flex;justify-content:space-between;margin-bottom:.45rem">
+        <span style="color:#94a3b8;font-size:.83rem">Progreso de pagos</span>
+        <span style="color:#10b981;font-weight:600;font-size:.83rem">${C.repPct}%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${C.repPct}%;background:linear-gradient(90deg,#10b981,#34d399)"></div></div>
+    </div>`:""}
+    <div class="lugar-rep-grid">
+      ${lugares.map(l=>{
+        const lF=C.repFacs.filter(f=>f.lugar===l.id);if(!lF.length)return"";
+        const tot=lF.reduce((s,f)=>s+f.importe,0),pag=lF.filter(f=>f._status==="pagada").reduce((s,f)=>s+f.importe,0),pct=tot>0?Math.round(pag/tot*100):0;
+        return `<div style="background:${l.color}0d;border:1px solid ${l.color}33;border-radius:12px;padding:1rem">
+          <div style="font-size:.8rem;font-weight:700;color:${l.color};margin-bottom:.4rem">${l.label}</div>
+          <div style="font-size:1.05rem;font-weight:700">${fmtARS(tot)}</div>
+          <div class="progress-bar" style="margin:.55rem 0 .3rem"><div class="progress-fill" style="width:${pct}%;background:${l.color}"></div></div>
+          <div style="font-size:.71rem;color:#4a5568">${fmtARS(pag)} pagado (${pct}%)</div>
+        </div>`;
+      }).join("")}
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="padding:.9rem 1.1rem;border-bottom:1px solid var(--border)"><div class="card-title">Detalle &mdash; ${MONTHS[state.repMes]} ${state.repAnio}</div></div>
+      ${C.repFacs.length===0?'<div class="empty" style="padding:2rem">No hay facturas en este periodo</div>':`
+      <div class="table-wrap"><table>
+        <thead><tr><th>Modulo</th><th>Concepto</th><th>N Factura</th><th>Importe</th><th>Vencimiento</th><th>Estado</th></tr></thead>
+        <tbody>${C.repFacs.map(f=>{const s=STATUS[f._status],lg=getLugar(f.lugar);return`<tr>
+          <td><span style="font-size:.73rem;color:${lg.color};background:${lg.color}18;padding:.15rem .45rem;border-radius:20px">${lg.label}</span></td>
+          <td style="color:#cbd5e1">${f.concepto}</td>
+          <td style="font-family:'DM Mono',monospace;color:#4a5568">${f.numero||"-"}</td>
+          <td style="font-weight:600">${fmtARS(f.importe)}</td>
+          <td style="color:#8899aa;white-space:nowrap">${new Date(f.vencimiento+"T12:00:00").toLocaleDateString("es-AR")}</td>
+          <td><span style="font-size:.72rem;padding:.18rem .5rem;border-radius:20px;background:${s.color}22;color:${s.color};font-weight:700">${s.label}</span></td>
+        </tr>`;}).join("")}</tbody>
+      </table></div>`}
+    </div>`;
+}
+
+function renderAccesoModal(){return`<div class="overlay" onclick="if(event.target===this)st({showAcceso:false})">
+  <div class="modal" style="max-width:340px;text-align:center">
+    <div style="font-size:1.3rem;font-weight:700;color:#f472b6;margin-bottom:.75rem">ACCESO PRIVADO</div>
+    <p style="color:#8899aa;font-size:.86rem;margin-bottom:1.25rem">Ingresa la clave para acceder a los modulos privados</p>
+    <div id="accesoErr"></div>
+    <input type="password" id="accesoInput" placeholder="Clave..." style="text-align:center;margin-bottom:1rem" onkeydown="if(event.key==='Enter')checkAcceso()">
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="st({showAcceso:false})">Cancelar</button>
+      <button class="btn" style="background:#f472b6;color:#fff;flex:2" onclick="checkAcceso()">Ingresar</button>
+    </div>
+  </div></div>`;}
+
+function renderCambClaveModal(){return`<div class="overlay">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-header"><div class="modal-title">Cambiar Clave Privada</div><button class="modal-close" onclick="st({showCambiarClave:false})">&#x2715;</button></div>
+    <div id="claveErr"></div>
+    <div class="form-group"><label>Clave actual</label><input type="password" id="claveVieja"></div>
+    <div class="form-group"><label>Nueva clave</label><input type="password" id="claveNueva"></div>
+    <div class="form-group"><label>Repetir nueva clave</label><input type="password" id="claveNueva2"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="st({showCambiarClave:false})">Cancelar</button>
+      <button class="btn" style="background:#f472b6;color:#fff;flex:2" onclick="checkCambClave()">Guardar</button>
+    </div>
+  </div></div>`;}
+
+function renderFactModal(initial,lugarId){
+  const f=initial||{}, lgs=allLugares();
+  return`<div class="overlay">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">${initial?"Editar Factura":"Nueva Factura"}</div><button class="modal-close" onclick="closeFactModal()">&#x2715;</button></div>
+    <div id="factErr"></div>
+    <div class="form-group"><label>Lugar / Modulo</label>
+      <select id="fLugar">${lgs.map(l=>`<option value="${l.id}"${(f.lugar||lugarId)===l.id?" selected":""}>${l.label}${l.privado?" (Privado)":""}</option>`).join("")}</select>
+    </div>
+    <div class="form-group"><label>N Factura</label><input type="text" id="fNumero" placeholder="Ej: 0002-00001234" value="${f.numero||""}"></div>
+    <div class="form-group"><label>Concepto</label><input type="text" id="fConcepto" placeholder="Ej: Edesur, AFIP, Alquiler..." value="${f.concepto||""}"></div>
+    <div class="form-group"><label>Importe (ARS)</label><input type="number" id="fImporte" placeholder="0" value="${f.importe||""}"></div>
+    <div class="form-group"><label>Vencimiento</label><input type="date" id="fVencimiento" value="${f.vencimiento||""}"></div>
+    <div class="form-group"><label>Categoria</label>
+      <select id="fCategoria">${CATS.map(c=>`<option${(f.categoria||"Servicios")===c?" selected":""}>${c}</option>`).join("")}</select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeFactModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveFactura(${initial?initial.id:"null"})">Guardar</button>
+    </div>
+  </div></div>`;}
+
+function renderPayModal(){
+  const f=state.payModal;
+  return`<div class="overlay">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-header"><div class="modal-title">Registrar Pago</div><button class="modal-close" onclick="st({payModal:null})">&#x2715;</button></div>
+    <div class="pay-summary"><div class="pay-concept">${f.concepto}</div><div class="pay-amount">${fmtARS(f.importe)}</div></div>
+    <div class="form-group"><label>Fecha de pago</label><input type="date" id="payFecha" value="${new Date().toISOString().split("T")[0]}"></div>
+    <div class="drop-zone" onclick="document.getElementById('payFile').click()">
+      <p id="payFileName">Adjuntar comprobante (opcional)</p>
+      <input type="file" id="payFile" style="display:none" onchange="document.getElementById('payFileName').textContent='Comprobante: '+this.files[0]?.name">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="st({payModal:null})">Cancelar</button>
+      <button class="btn btn-success" onclick="confirmPay(${f.id})">Confirmar Pago</button>
+    </div>
+  </div></div>`;}
+
+function renderConfirm(){
+  const f=state.facturas.find(x=>x.id===state.confirmDel);
+  return`<div class="overlay">
+  <div class="modal" style="max-width:340px;text-align:center">
+    <div style="font-size:1.1rem;font-weight:700;margin-bottom:.5rem">Eliminar factura?</div>
+    <p style="color:#8899aa;font-size:.88rem;margin-bottom:1.5rem">${f?.concepto||""}</p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="st({confirmDel:null})">Cancelar</button>
+      <button class="btn" style="background:#ef4444;color:#fff" onclick="delFactura(${state.confirmDel})">Eliminar</button>
+    </div>
+  </div></div>`;}
+
+// ====== ACTIONS ======
+function st(patch){Object.assign(state,patch);render();}
+function setView(v){state.view=v;render();}
+function setLugar(id){state.lugarActivo=id;render();}
+function cerrarPriv(){state.privUnlocked=false;if(LUGARES_PRIV.some(l=>l.id===state.lugarActivo))state.lugarActivo="todos";render();}
+function closeFactModal(){state.addModal=false;state.editModal=null;render();}
+function escJ(obj){return JSON.stringify(obj).replace(/'/g,"&#39;");}
+
+function checkAcceso(){
+  const val=document.getElementById("accesoInput")?.value;
+  if(val===(state.savedClave||CLAVE_DEFAULT)){state.privUnlocked=true;state.showAcceso=false;render();}
+  else{const e=document.getElementById("accesoErr");if(e)e.innerHTML='<div class="error-box">Clave incorrecta</div>';document.getElementById("accesoInput").value="";}
+}
+function checkCambClave(){
+  const vieja=document.getElementById("claveVieja")?.value;
+  const nueva=document.getElementById("claveNueva")?.value;
+  const nueva2=document.getElementById("claveNueva2")?.value;
+  const e=document.getElementById("claveErr");
+  if(vieja!==(state.savedClave||CLAVE_DEFAULT)){e.innerHTML='<div class="error-box">La clave actual es incorrecta</div>';return;}
+  if(nueva.length<4){e.innerHTML='<div class="error-box">La nueva clave debe tener al menos 4 caracteres</div>';return;}
+  if(nueva!==nueva2){e.innerHTML='<div class="error-box">Las claves nuevas no coinciden</div>';return;}
+  state.savedClave=nueva;localStorage.setItem("priv_clave",nueva);state.showCambiarClave=false;render();
+}
+async function saveFactura(existingId){
+  const concepto=document.getElementById("fConcepto")?.value?.trim();
+  const importe=document.getElementById("fImporte")?.value;
+  const vencimiento=document.getElementById("fVencimiento")?.value;
+  const e=document.getElementById("factErr");
+  if(!concepto||!importe||!vencimiento){if(e)e.innerHTML='<div class="error-box">Completa concepto, importe y vencimiento</div>';return;}
+  const data={lugar:document.getElementById("fLugar")?.value,numero:document.getElementById("fNumero")?.value?.trim(),concepto,importe:parseFloat(importe)||0,vencimiento,categoria:document.getElementById("fCategoria")?.value};
+  if(existingId===null){await addFactura(data);}
+  else{await editFactura(state.facturas.find(f=>f.id===existingId),data);}
+}
+async function confirmPay(id){
+  const fecha=document.getElementById("payFecha")?.value;
+  const comp=document.getElementById("payFile")?.files[0]?.name||"registrado";
+  state.payModal=null;
+  await payFactura(id,fecha,comp);
+}
+
+// ====== INIT ======
+loadFacturas();
+</script>
+</body>
+</html>
