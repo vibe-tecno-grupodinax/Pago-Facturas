@@ -183,13 +183,27 @@ async function loadFacturas() {
   try {
     const data = await api({action:"getAll"});
     function normFecha(d) {
-      if(!d) return "";
-      // Si viene DD/MM/YYYY lo convierte a YYYY-MM-DD
-      const p = d.split("/");
-      if(p.length===3 && p[2].length===4) return p[2]+"-"+p[1].padStart(2,"0")+"-"+p[0].padStart(2,"0");
-      return d;
+      if(!d||d==="") return "";
+      const s = String(d).trim();
+      // YYYY-MM-DD ya correcto
+      if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+      // DD/MM/YYYY
+      const p = s.split("/");
+      if(p.length===3&&p[2].length===4) return p[2]+"-"+p[1].padStart(2,"0")+"-"+p[0].padStart(2,"0");
+      // MM/DD/YYYY (formato US)
+      if(p.length===3&&p[2].length===4&&parseInt(p[0])<=12) return p[2]+"-"+p[0].padStart(2,"0")+"-"+p[1].padStart(2,"0");
+      // Numero serial de Excel/Sheets (ej: 46095)
+      const n = parseInt(s);
+      if(!isNaN(n)&&n>40000&&n<60000) {
+        const d = new Date((n-25569)*86400000);
+        return d.toISOString().split("T")[0];
+      }
+      // Intentar parsear como fecha generica
+      const dt = new Date(s);
+      if(!isNaN(dt.getTime())) return dt.toISOString().split("T")[0];
+      return "";
     }
-    state.facturas = data.map(f=>({...f, importe:parseFloat(f.importe)||0, id:parseInt(f.id)||0, vencimiento:normFecha(f.vencimiento), fecha_pago:normFecha(f.fecha_pago)})).filter(f=>f.id>0);
+    state.facturas = data.map(f=>({...f, importe:parseFloat(String(f.importe).replace(",","."))||0, id:parseInt(f.id)||0, vencimiento:normFecha(f.vencimiento), fecha_pago:normFecha(f.fecha_pago)})).filter(f=>f.id>0);
   } catch(e) { state.loadError = e.message; }
   state.loading=false; render();
 }
