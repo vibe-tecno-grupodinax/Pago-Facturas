@@ -462,10 +462,10 @@ function renderRep(C,lugares){
         <thead><tr><th>Modulo</th><th>Concepto</th><th>N Factura</th><th>Importe</th><th>Vencimiento</th><th>Estado</th></tr></thead>
         <tbody>${C.repFacs.map(f=>{const s=STATUS[f._status],lg=getLugar(f.lugar);return`<tr>
           <td><span style="font-size:.73rem;color:${lg.color};background:${lg.color}18;padding:.15rem .45rem;border-radius:20px">${lg.label}</span></td>
-          <td style="color:#cbd5e1">${f.concepto}</td>
+          <td style="color:#1a1f3a;font-weight:500">${f.concepto}</td>
           <td style="font-family:'DM Mono',monospace;color:#4a5568">${f.numero||"-"}</td>
           <td style="font-weight:600">${fmtARS(f.importe)}</td>
-          <td style="color:#8899aa;white-space:nowrap">${new Date(f.vencimiento+"T12:00:00").toLocaleDateString("es-AR")}</td>
+          <td style="color:#4a5270;white-space:nowrap">${new Date(f.vencimiento+"T12:00:00").toLocaleDateString("es-AR")}</td>
           <td><span style="font-size:.72rem;padding:.18rem .5rem;border-radius:20px;background:${s.color}22;color:${s.color};font-weight:700">${s.label}</span></td>
         </tr>`;}).join("")}</tbody>
       </table></div>`}
